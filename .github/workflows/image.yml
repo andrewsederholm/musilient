@@ -1,16 +1,14 @@
-# Fork-only image pipeline for andrewsederholm/slopify.
+# Image pipeline for andrewsederholm/musilient.
 #
-# Publishes ghcr.io/andrewsederholm/slopify (linux/amd64, the slim "runtime"
+# Publishes ghcr.io/andrewsederholm/musilient (linux/amd64, the slim "runtime"
 # image) on every push to main:
 #   :latest, :main  -> newest build of main
 #   :sha-<commit>   -> immutable tag, pin this in production / roll back to it
 #
-# No tests run first (deliberate choice). Upstream's workflows (ci, docker,
-# release, home-assistant) are left untouched in git and disabled in this
-# fork's Actions settings, so syncing with lukasbaxter/slopify never conflicts.
-# If an upstream sync adds a new workflow, decide whether to disable it too.
+# No tests run first (deliberate choice). This is the only workflow; the
+# inherited upstream ones (ci, docker, release, home-assistant) were removed.
 
-name: Fork image
+name: Image
 
 on:
   push:
@@ -18,7 +16,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: fork-image
+  group: image
   cancel-in-progress: false
 
 permissions:
@@ -27,8 +25,8 @@ permissions:
 jobs:
   build:
     name: Build and push image
-    # Never run outside the fork, e.g. if this file ever lands upstream.
-    if: github.repository == 'andrewsederholm/slopify'
+    # Only run in the main repo, not in forks of it.
+    if: github.repository == 'andrewsederholm/musilient'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -60,7 +58,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/andrewsederholm/slopify
+          images: ghcr.io/andrewsederholm/musilient
           flavor: latest=false
           tags: |
             type=raw,value=latest
@@ -76,5 +74,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=fork-runtime
-          cache-to: type=gha,mode=max,scope=fork-runtime
+          cache-from: type=gha,scope=runtime
+          cache-to: type=gha,mode=max,scope=runtime
